@@ -4,34 +4,35 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "tsx watch src/server.ts",
-        "build": "tsc",
-        "start": "node dist/server.js",
+        "dev": "tsx watch src/index.ts",
+        "build": "prisma generate && tsc",
+        "start": "node dist/index.js",
         "test": "vitest run",
         "seed": "tsx prisma/seed.ts",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate deploy"
     },
     "dependencies": {
-        "@prisma/client": "latest",
-        "bcryptjs": "latest",
-        "cors": "latest",
-        "dotenv": "latest",
-        "express": "latest",
-        "helmet": "latest",
-        "jsonwebtoken": "latest",
-        "zod": "latest"
+        "@prisma/client": "6.19.0",
+        "bcryptjs": "2.4.3",
+        "cors": "2.8.5",
+        "dotenv": "16.4.7",
+        "express": "4.21.2",
+        "helmet": "8.1.0",
+        "jsonwebtoken": "9.0.2",
+        "zod": "3.24.2"
     },
     "devDependencies": {
-        "@types/cors": "latest",
-        "@types/express": "latest",
-        "@types/jsonwebtoken": "latest",
-        "@types/node": "latest",
-        "prisma": "latest",
-        "tsx": "latest",
-        "typescript": "latest",
-        "vitest": "latest",
-        "supertest": "latest",
-        "@types/supertest": "latest"
+        "@types/bcryptjs": "2.4.6",
+        "@types/cors": "2.8.17",
+        "@types/express": "5.0.0",
+        "@types/jsonwebtoken": "9.0.9",
+        "@types/node": "22.13.4",
+        "@types/supertest": "6.0.2",
+        "prisma": "6.19.0",
+        "supertest": "7.0.0",
+        "tsx": "4.19.3",
+        "typescript": "5.7.3",
+        "vitest": "3.0.5"
     }
 }
