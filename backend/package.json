@@ -1,0 +1,37 @@
+{
+    "name": "paypilot-backend",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/server.ts",
+        "build": "tsc",
+        "start": "node dist/server.js",
+        "test": "vitest run",
+        "seed": "tsx prisma/seed.ts",
+        "db:generate": "prisma generate",
+        "db:migrate": "prisma migrate deploy"
+    },
+    "dependencies": {
+        "@prisma/client": "latest",
+        "bcryptjs": "latest",
+        "cors": "latest",
+        "dotenv": "latest",
+        "express": "latest",
+        "helmet": "latest",
+        "jsonwebtoken": "latest",
+        "zod": "latest"
+    },
+    "devDependencies": {
+        "@types/cors": "latest",
+        "@types/express": "latest",
+        "@types/jsonwebtoken": "latest",
+        "@types/node": "latest",
+        "prisma": "latest",
+        "tsx": "latest",
+        "typescript": "latest",
+        "vitest": "latest",
+        "supertest": "latest",
+        "@types/supertest": "latest"
+    }
+}
