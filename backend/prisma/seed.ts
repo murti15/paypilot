@@ -1,7 +1,11 @@
 
-import { PrismaClient, EmploymentStatus } from "@prisma/client";
+import { PrismaClient, EmploymentStatus, UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+const TOTAL_EMPLOYEES = 10_000;
+const BATCH_SIZE = 500;
 
 const departments = [
     "Engineering",
@@ -16,7 +20,7 @@ const departments = [
     "IT",
 ];
 
-const roles = [
+const designations = [
     "Software Engineer",
     "Senior Engineer",
     "Team Lead",
@@ -27,80 +31,110 @@ const roles = [
 ];
 
 const locations = [
-    { country: "India", currency: "INR", min: 600000, max: 3000000 },
-    { country: "United States", currency: "USD", min: 65000, max: 190000 },
-    { country: "United Kingdom", currency: "GBP", min: 40000, max: 120000 },
-    { country: "Germany", currency: "EUR", min: 45000, max: 130000 },
-    { country: "Singapore", currency: "SGD", min: 50000, max: 150000 },
+    { country: "India", currency: "INR", min: 600_000, max: 3_000_000 },
+    { country: "United States", currency: "USD", min: 65_000, max: 190_000 },
+    { country: "United Kingdom", currency: "GBP", min: 40_000, max: 120_000 },
+    { country: "Germany", currency: "EUR", min: 45_000, max: 130_000 },
+    { country: "Singapore", currency: "SGD", min: 50_000, max: 150_000 },
 ];
 
 const firstNames = [
-    "Aarav", "Priya", "Rohan", "Ananya", "Vikram", "Neha",
-    "Arjun", "Isha", "Kabir", "Meera", "Rahul", "Sana",
-    "Aditya", "Diya", "Karan", "Aisha", "Dev", "Maya",
-    "Ibrahim", "Sofia",
+    "Aarav", "Priya", "Rohan", "Ananya", "Vikram",
+    "Neha", "Arjun", "Isha", "Kabir", "Meera",
+    "Rahul", "Sana", "Aditya", "Diya", "Karan",
+    "Aisha", "Dev", "Maya", "Ibrahim", "Sofia",
 ];
 
 const lastNames = [
-    "Sharma", "Patel", "Singh", "Kumar", "Gupta", "Reddy",
-    "Mehta", "Shah", "Verma", "Rao", "Das", "Malhotra",
-    "Kapoor", "Joshi", "Nair", "Brown", "Wilson", "Miller",
+    "Sharma", "Patel", "Singh", "Kumar", "Gupta",
+    "Reddy", "Mehta", "Shah", "Verma", "Rao",
+    "Das", "Malhotra", "Kapoor", "Joshi", "Nair",
+    "Brown", "Wilson", "Miller",
 ];
 
-async function main() {
-    const batchSize = 500;
-    const totalEmployees = 10_000;
+async function seedEmployees() {
+    for (let start = 0; start < TOTAL_EMPLOYEES; start += BATCH_SIZE) {
+        const count = Math.min(BATCH_SIZE, TOTAL_EMPLOYEES - start);
 
-    for (let start = 0; start < totalEmployees; start += batchSize) {
-        const batch = Array.from(
-            { length: Math.min(batchSize, totalEmployees - start) },
-            (_, offset) => {
-                const index = start + offset;
-                const location = locations[index % locations.length];
-                const baseSalary =
-                    Math.round(
-                        location.min +
-                        ((index * 7919) % (location.max - location.min)),
-                    );
+        const employees = Array.from({ length: count }, (_, offset) => {
+            const index = start + offset;
+            const location = locations[index % locations.length];
+            const salaryRange = location.max - location.min;
+            const baseSalary =
+                location.min + ((index * 7919) % salaryRange);
 
-                return {
-                    employeeCode: `PP${String(index + 1).padStart(6, "0")}`,
-                    firstName: firstNames[index % firstNames.length],
-                    lastName: lastNames[(index * 7) % lastNames.length],
-                    email: `employee${index + 1}@example.com`,
-                    department: departments[index % departments.length],
-                    designation: roles[index % roles.length],
-                    country: location.country,
-                    currency: location.currency,
-                    baseSalary,
-                    bonus: Math.round(baseSalary * ((index % 16) / 100)),
-                    employmentStatus:
-                        index % 25 === 0
-                            ? EmploymentStatus.ON_LEAVE
-                            : index % 40 === 0
-                                ? EmploymentStatus.INACTIVE
-                                : EmploymentStatus.ACTIVE,
-                    joiningDate: new Date(
-                        Date.UTC(2018 + (index % 8), index % 12, 1),
-                    ),
-                };
-            },
-        );
+            const employmentStatus =
+                index % 40 === 0
+                    ? EmploymentStatus.INACTIVE
+                    : index % 25 === 0
+                        ? EmploymentStatus.ON_LEAVE
+                        : EmploymentStatus.ACTIVE;
+
+            return {
+                employeeCode: `PP${String(index + 1).padStart(6, "0")}`,
+                firstName: firstNames[index % firstNames.length],
+                lastName: lastNames[(index * 7) % lastNames.length],
+                email: `employee${index + 1}@example.com`,
+                department: departments[index % departments.length],
+                designation: designations[index % designations.length],
+                country: location.country,
+                currency: location.currency,
+                baseSalary,
+                bonus: Math.round(baseSalary * ((index % 16) / 100)),
+                employmentStatus,
+                joiningDate: new Date(
+                    Date.UTC(2018 + (index % 8), index % 12, 1),
+                ),
+            };
+        });
 
         await prisma.employee.createMany({
-            data: batch,
+            data: employees,
             skipDuplicates: true,
         });
 
-        console.log(`Processed employees through ${start + batch.length}`);
+        console.log(`Processed batch: ${start + 1}–${start + count}`);
+    }
+}
+
+async function seedDemoHR() {
+    const password = process.env.DEMO_HR_PASSWORD;
+
+    if (!password || password.length < 12) {
+        throw new Error(
+            "Set DEMO_HR_PASSWORD to a password of at least 12 characters before seeding.",
+        );
     }
 
-    console.log("Seed completed. Target: 10,000 employees.");
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await prisma.user.upsert({
+        where: { email: "hr@paypilot.demo" },
+        update: {
+            passwordHash,
+            role: UserRole.HR,
+        },
+        create: {
+            email: "hr@paypilot.demo",
+            passwordHash,
+            role: UserRole.HR,
+        },
+    });
+
+    console.log("Demo HR account configured.");
+}
+
+async function main() {
+    await seedEmployees();
+    await seedDemoHR();
+
+    const employeeCount = await prisma.employee.count();
+    console.log(`Seed finished. Total employees in database: ${employeeCount}`);
 }
 
 main()
     .catch((error) => {
-        console.error("Seed failed:", error);
+        console.error("Seeding failed:", error);
         process.exitCode = 1;
     })
     .finally(async () => {
