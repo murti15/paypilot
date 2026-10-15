@@ -1,4 +1,4 @@
-<escape>{
+{
     "compilerOptions": {
         "target": "ES2022",
         "module": "NodeNext",
@@ -13,4 +13,4 @@
     "include": [
         "src/**/*.ts"
     ]
-}</escape>
+}

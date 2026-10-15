@@ -283,7 +283,7 @@ app.get(
     authenticate,
     asyncHandler(async (req, res) => {
         const employee = await prisma.employee.findUnique({
-            where: { id: req.params.id },
+            where: { id: String(req.params.id) },
             select: {
                 id: true,
                 employeeCode: true,
@@ -352,7 +352,7 @@ app.patch(
 
         const result = await prisma.$transaction(async (tx) => {
             const employee = await tx.employee.findUnique({
-                where: { id: req.params.id },
+                where: { id: String(req.params.id) },
             });
 
             if (!employee) return null;
